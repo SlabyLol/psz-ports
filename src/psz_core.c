@@ -30,17 +30,55 @@ psz_format_t psz_detect_format(const uint8_t *data, size_t len) {
 int psz_extract_archive(const uint8_t *archive_data, size_t archive_len, 
                         const uint8_t *key, size_t key_len, 
                         const char *output_dir) {
-    printf("[PSZ Core] Extracting archive to %s...\n", output_dir);
+    if (!archive_data || archive_len < sizeof(psz_header_t)) {
+        return -1;
+    }
+
+    psz_header_t *header = (psz_header_t *)archive_data;
+    if (memcmp(header->magic, "PSZ1", 4) != 0) {
+        return -1;
+    }
+
+    // Write out payload to output file / directory
+    char out_filepath[512];
+    snprintf(out_filepath, sizeof(out_filepath), "%s/extracted_payload.bin", output_dir);
+    
+    FILE *f = fopen(out_filepath, "wb");
+    if (!f) return -1;
+
+    const uint8_t *payload_ptr = archive_data + sizeof(psz_header_t);
+    size_t payload_size = archive_len - sizeof(psz_header_t);
+    
+    fwrite(payload_ptr, 1, payload_size, f);
+    fclose(f);
+
     return 0;
 }
 
 int psz_make_archive(const char *source_path, const char *output_psz_path, psz_format_t format) {
-    printf("[PSZ Core] Creating archive from source: %s -> %s (Format: %d)\n", 
-           source_path, output_psz_path, format);
-    
-    // Simulate archive creation / packaging logic
-    FILE *f = fopen(output_psz_path, "wb");
-    if (!f) {
+    // Open source file to read its content
+    FILE *src = fopen(source_path, "rb");
+    if (!src) {
+        return -1;
+    }
+
+    fseek(src, 0, SEEK_END);
+    long src_size = ftell(src);
+    fseek(src, 0, SEEK_SET);
+
+    uint8_t *src_buf = malloc(src_size);
+    if (!src_buf) {
+        fclose(src);
+        return -1;
+    }
+
+    fread(src_buf, 1, src_size, src);
+    fclose(src);
+
+    // Create output .psz file
+    FILE *out = fopen(output_psz_path, "wb");
+    if (!out) {
+        free(src_buf);
         return -1;
     }
 
@@ -48,16 +86,15 @@ int psz_make_archive(const char *source_path, const char *output_psz_path, psz_f
     memcpy(header.magic, "PSZ1", 4);
     header.version = 1;
     header.key_len = 32;
-    header.payload_len = 1024; // Simulated size
+    header.payload_len = (uint32_t)src_size;
     header.format_type = format;
 
-    fwrite(&header, sizeof(psz_header_t), 1, f);
-    // Write dummy payload representing packed tar/zip data
-    char dummy_payload[256];
-    memset(dummy_payload, 0xAB, sizeof(dummy_payload));
-    fwrite(dummy_payload, 1, sizeof(dummy_payload), f);
+    // Write header and payload
+    fwrite(&header, sizeof(psz_header_t), 1, out);
+    fwrite(src_buf, 1, src_size, out);
 
-    fclose(f);
-    printf("[PSZ Core] Archive successfully created at %s\n", output_psz_path);
+    fclose(out);
+    free(src_buf);
+
     return 0;
 }
