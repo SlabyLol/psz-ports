@@ -1,10 +1,10 @@
-name: PSZ CI/CD & Unit Tests
+name: PSZ CI/CD & Auto-Release
 
 on:
   push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    tags:
+      - 'v*' # Trigger release on version tags like v1.0.0
+  workflow_dispatch: # Allow manual trigger
 
 jobs:
   run-unit-tests:
@@ -28,6 +28,11 @@ jobs:
         run: |
           cd platforms/psp
           make eboot
+      - name: Upload PSP Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: psz-psp
+          path: platforms/psp/EBOOT.PBP
 
   build-3ds:
     needs: run-unit-tests
@@ -40,6 +45,11 @@ jobs:
         run: |
           cd platforms/3ds
           make
+      - name: Upload 3DS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: psz-3ds
+          path: platforms/3ds/psz_3ds.3dsx
 
   build-wii-wiiu:
     needs: run-unit-tests
@@ -56,3 +66,48 @@ jobs:
         run: |
           cd platforms/wiiu
           make
+      - name: Upload Wii Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: psz-wii
+          path: platforms/wii/psz_wii.dol
+      - name: Upload Wii U Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: psz-wiiu
+          path: platforms/wiiu/psz_wiiu.rpx
+
+  create-release:
+    needs: [build-psp, build-3ds, build-wii-wiiu]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-assets/EBOOT.PBP
+            release-assets/psz_3ds.3dsx
+            release-assets/psz_wii.dol
+            release-assets/psz_wiiu.rpx
+          name: PSZ Homebrew Release ${{ github.ref_name }}
+          body: |
+            Automated multi-platform release for PSZ Archive Studio.
+            
+            Supported Platforms:
+            - Sony PSP (EBOOT.PBP)
+            - Nintendo 3DS (.3dsx)
+            - Nintendo Wii (.dol)
+            - Nintendo Wii U (.rpx)
+            
+            Verified by automated unit tests.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
