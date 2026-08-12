@@ -1,0 +1,46 @@
+name: Build Homebrew Ports
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build-psp:
+    runs-on: ubuntu-latest
+    container: pspdev/pspdev:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build PSP
+        run: |
+          cd platforms/psp
+          make
+
+  build-3ds:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitarm:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build 3DS
+        run: |
+          dfile-configure || true
+          cd platforms/3ds
+          make
+
+  build-wii-wiiu:
+    runs-on: ubuntu-latest
+    container: devkitpro/devkitppc:latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Build Wii
+        run: |
+          cd platforms/wii
+          make
+      - name: Build Wii U
+        run: |
+          cd platforms/wiiu
+          make
