@@ -46,10 +46,6 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
-      - name: Install supported 3DS development group
-        run: |
-          sudo dkp-pacman -Syu --noconfirm
-          sudo dkp-pacman -S --needed --noconfirm 3ds-dev
       - name: Build 3DSX package
         run: make -C platforms/3ds clean all
       - name: Upload 3DSX package
@@ -67,10 +63,6 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
-      - name: Install supported Wii development group
-        run: |
-          sudo dkp-pacman -Syu --noconfirm
-          sudo dkp-pacman -S --needed --noconfirm wii-dev
       - name: Build Wii package
         run: make -C platforms/wii clean all
       - name: Upload Wii package
@@ -88,10 +80,6 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
-      - name: Install supported Wii U development group
-        run: |
-          sudo dkp-pacman -Syu --noconfirm
-          sudo dkp-pacman -S --needed --noconfirm wiiu-dev
       - name: Build Wii U package
         run: make -C platforms/wiiu clean all
       - name: Upload Wii U package
