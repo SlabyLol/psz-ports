@@ -5,8 +5,8 @@ endif
 include $(DEVKITPPC)/wii_rules
 
 TARGET		:= psz_wii
-CFLAGS		:= -O2 -Wall -I../../include
-LDFLAGS		:= -L$(LIBOGC_LIBS) -lwiiuse -lbte -logc -lm
+CFLAGS		:= -O2 -Wall -I../../include -I$(DEVKITPRO)/libogc/include
+LDFLAGS		:= -L$(DEVKITPRO)/libogc/lib -lwiiuse -lbte -logc -lm
 
 all: $(TARGET).dol
 

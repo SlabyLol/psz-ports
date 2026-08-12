@@ -2,7 +2,7 @@ TARGET		:= psz_3ds
 BUILD		:= build
 SOURCES		:= . ../../src
 DATA		:= data
-INCLUDES	:= ../../include
+INCLUDES	:= ../../include -I$(DEVKITPRO)/libctru/include
 
 ifeq ($(strip $(DEVKITARM)),)
 $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path> to devkitARM")
@@ -18,7 +18,7 @@ CFLAGS	:=	-Wall -O2 -mword-relocations \
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	:=	-specs=3dsx.specs $(ARCH) -Wl,--gc-sections
+LDFLAGS	:=	-specs=3dsx.specs $(ARCH) -Wl,--gc-sections -L$(DEVKITPRO)/libctru/lib
 
 LIBS	:=	-lcitro2d -lcitro3d -lctru -lm
 

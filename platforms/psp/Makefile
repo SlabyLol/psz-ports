@@ -7,7 +7,7 @@ ASFLAGS = $(CFLAGS)
 
 EXTRA_CLEAN = PARAM.SFO EBOOT.PBP
 
-PSPSDK = $(shell psp-config --pspsdk-dir)
+PSPSDK = $(shell psp-config --pspsdk-path)
 include $(PSPSDK)/lib/build.mak
 
 # Custom target to bundle icons and banners into EBOOT.PBP

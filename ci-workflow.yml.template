@@ -41,9 +41,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Install 3DS Libraries
+        run: |
+          sudo dkp-pacman -Sy
+          sudo dkp-pacman -S --noconfirm 3ds-dev 3ds-citro2d 3ds-citro3d 3ds-libctru
       - name: Build 3DS
         run: |
-          dfile-configure || true
           cd platforms/3ds
           make
       - name: Upload 3DS 3DSX
@@ -64,6 +67,10 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Install Wii/WiiU Libraries
+        run: |
+          sudo dkp-pacman -Sy
+          sudo dkp-pacman -S --noconfirm wii-dev wiiu-dev wiiu-libwuhb
       - name: Build Wii
         run: |
           cd platforms/wii
