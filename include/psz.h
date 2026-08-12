@@ -18,7 +18,7 @@ typedef enum {
 
 // PSZ Header & Archive Structure Definitions
 typedef struct {
-    char magic[4];          // "PSZ1" or "PK\x03\x04" etc.
+    char magic[4];          // "PSZ1"
     uint32_t version;
     uint32_t key_len;
     uint32_t payload_len;
@@ -32,10 +32,13 @@ void psz_cleanup(void);
 // Detect format based on magic bytes
 psz_format_t psz_detect_format(const uint8_t *data, size_t len);
 
-// Universal extraction dispatcher supporting multiple formats
+// Extraction
 int psz_extract_archive(const uint8_t *archive_data, size_t archive_len, 
                         const uint8_t *key, size_t key_len, 
                         const char *output_dir);
+
+// Creation ("make archive")
+int psz_make_archive(const char *source_path, const char *output_psz_path, psz_format_t format);
 
 #ifdef __cplusplus
 }

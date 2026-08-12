@@ -3,7 +3,7 @@ BUILD		:= build
 SOURCES		:= . ../../src
 DATA		:= data
 INCLUDES	:= ../../include
-#---------------------------------------------------------------------------------
+
 ifeq ($(strip $(DEVKITARM)),)
 $(error "Please set DEVKITARM in your environment. export DEVKITARM=<path> to devkitARM")
 endif
@@ -20,11 +20,8 @@ CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	:=	-specs=3dsx.specs $(ARCH) -Wl,--gc-sections
 
-LIBS	:=	-lctru -lm
+LIBS	:=	-lcitro2d -lcitro3d -lctru -lm
 
-# -----------------------------------------------------------------
-# Simple build targets (handled by devkitPro standard templates or custom rules)
-# -----------------------------------------------------------------
 all: $(TARGET).3dsx
 
 $(TARGET).3dsx: $(TARGET).elf
