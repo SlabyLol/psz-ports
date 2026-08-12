@@ -139,6 +139,38 @@ int main(int argc, char **argv) {
         if (kDown & KEY_UP && selected_index > 0) selected_index--;
         if (kDown & KEY_DOWN && selected_index < file_count - 1) selected_index++;
 
+        // Button action support ([A] to open/extract, [Y] to make archive)
+        if (kDown & KEY_A && file_count > 0) {
+            FileEntry *entry = &file_list[selected_index];
+            if (entry->is_dir) {
+                if (strcmp(entry->name, "..") == 0) {
+                    char *last_slash = strrchr(current_path, '/');
+                    if (last_slash && last_slash != current_path) {
+                        *last_slash = '\0';
+                    }
+                } else {
+                    strcat(current_path, "/");
+                    strcat(current_path, entry->name);
+                }
+                scan_directory(current_path);
+            } else {
+                snprintf(action_status, sizeof(action_status), "Extracted: %s", entry->name);
+                char full_file_path[MAX_PATH];
+                snprintf(full_file_path, MAX_PATH, "%s/%s", current_path, entry->name);
+                psz_extract_archive(full_file_path, strlen(full_file_path), NULL, 0, current_path);
+            }
+        }
+
+        if (kDown & KEY_Y && file_count > 0) {
+            FileEntry *entry = &file_list[selected_index];
+            snprintf(action_status, sizeof(action_status), "Archived: %s", entry->name);
+            char full_file_path[MAX_PATH];
+            snprintf(full_file_path, MAX_PATH, "%s/%s", current_path, entry->name);
+            char out_psz[MAX_PATH];
+            snprintf(out_psz, MAX_PATH, "%s/archive.psz", current_path);
+            psz_make_archive(full_file_path, out_psz, PSZ_FORMAT_PSZ);
+        }
+
         C2D_TextBufClear(frameTextBuf);
         C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
 

@@ -79,6 +79,8 @@ int main(int argc, char *argv[]) {
     pspDebugScreenInit();
     SetupCallbacks();
 
+    sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
+
     psz_init();
     scan_directory(current_path);
 
