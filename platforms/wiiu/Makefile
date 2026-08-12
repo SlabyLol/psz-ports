@@ -14,9 +14,9 @@ INCLUDES := ../../include
 APP_NAME := PSZ Studio
 APP_SHORTNAME := PSZ
 APP_AUTHOR := SlabyLol
-ICON := ../../assets/wiiu/icon.png
-TV_SPLASH := ../../assets/wiiu/banner.png
-DRC_SPLASH := ../../assets/wiiu/banner.png
+ICON := ../../assets/wiiu/icon128.png
+TV_SPLASH := ../../assets/wiiu/tv_splash.png
+DRC_SPLASH := ../../assets/wiiu/drc_splash.png
 
 CFLAGS := -g -Wall -O2 -ffunction-sections $(MACHDEP) $(INCLUDE) -I../../include -D__WIIU__ -D__WUT__
 CXXFLAGS := $(CFLAGS)
@@ -32,6 +32,8 @@ export VPATH := $(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
 export DEPSDIR := $(CURDIR)/$(BUILD)
 CFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
 export OFILES := $(CFILES:.c=.o)
+# wut_rules invokes LD; use the devkitPPC compiler driver rather than the host linker.
+export LD := $(CC)
 export INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) $(foreach dir,$(LIBDIRS),-I$(dir)/include) -I$(CURDIR)/$(BUILD)
 export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 export APP_ICON := $(TOPDIR)/$(ICON)
