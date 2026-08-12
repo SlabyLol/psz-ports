@@ -1,7 +1,7 @@
-#include "psz.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "psz.h"
 
 int psz_init(void) {
     return 0;
@@ -20,7 +20,7 @@ psz_format_t psz_detect_format(const uint8_t *data, size_t len) {
         return PSZ_FORMAT_PSZ;
     } else if (memcmp(data, "PK\x03\x04", 4) == 0) {
         return PSZ_FORMAT_ZIP;
-    } else if (memcmp(data, "ustar", 5) == 2) {
+    } else if (len > 257 && memcmp(data + 257, "ustar", 5) == 0) {
         return PSZ_FORMAT_TAR;
     }
 
@@ -30,33 +30,36 @@ psz_format_t psz_detect_format(const uint8_t *data, size_t len) {
 int psz_extract_archive(const uint8_t *archive_data, size_t archive_len, 
                         const uint8_t *key, size_t key_len, 
                         const char *output_dir) {
-    if (!archive_data || archive_len < sizeof(psz_header_t)) {
+    if (!archive_data || archive_len < (4 + 1 + PSZ_NONCE_SIZE)) {
         return -1;
     }
 
-    psz_header_t *header = (psz_header_t *)archive_data;
-    if (memcmp(header->magic, "PSZ1", 4) != 0) {
+    if (memcmp(archive_data, PSZ_MAGIC, 4) != 0) {
         return -1;
     }
 
-    // Write out payload to output file / directory
+    uint8_t version = archive_data[4];
+    if (version != PSZ_VERSION) {
+        return -1;
+    }
+
+    const uint8_t *payload_ptr = archive_data + 4 + 1 + PSZ_NONCE_SIZE;
+    size_t payload_len = archive_len - (4 + 1 + PSZ_NONCE_SIZE);
+
+    // Write extracted payload
     char out_filepath[512];
     snprintf(out_filepath, sizeof(out_filepath), "%s/extracted_payload.bin", output_dir);
     
     FILE *f = fopen(out_filepath, "wb");
     if (!f) return -1;
-
-    const uint8_t *payload_ptr = archive_data + sizeof(psz_header_t);
-    size_t payload_size = archive_len - sizeof(psz_header_t);
     
-    fwrite(payload_ptr, 1, payload_size, f);
+    fwrite(payload_ptr, 1, payload_len, f);
     fclose(f);
 
     return 0;
 }
 
 int psz_make_archive(const char *source_path, const char *output_psz_path, psz_format_t format) {
-    // Open source file to read its content
     FILE *src = fopen(source_path, "rb");
     if (!src) {
         return -1;
@@ -66,36 +69,38 @@ int psz_make_archive(const char *source_path, const char *output_psz_path, psz_f
     long src_size = ftell(src);
     fseek(src, 0, SEEK_SET);
 
-    uint8_t *src_buf = malloc(src_size);
+    uint8_t *src_buf = malloc(src_size > 0 ? src_size : 1);
     if (!src_buf) {
         fclose(src);
         return -1;
     }
 
-    if (fread(src_buf, 1, (size_t)src_size, src) != (size_t)src_size) {
+    if (src_size > 0 && fread(src_buf, 1, (size_t)src_size, src) != (size_t)src_size) {
         fclose(src);
         free(src_buf);
         return -1;
     }
     fclose(src);
 
-    // Create output .psz file
     FILE *out = fopen(output_psz_path, "wb");
     if (!out) {
         free(src_buf);
         return -1;
     }
 
-    psz_header_t header;
-    memcpy(header.magic, "PSZ1", 4);
-    header.version = 1;
-    header.key_len = 32;
-    header.payload_len = (uint32_t)src_size;
-    header.format_type = format;
+    // Write exact Python psz header: MAGIC (4) + VERSION (1) + NONCE (12)
+    fwrite(PSZ_MAGIC, 1, 4, out);
+    uint8_t version = PSZ_VERSION;
+    fwrite(&version, 1, 1, out);
 
-    // Write header and payload
-    fwrite(&header, sizeof(psz_header_t), 1, out);
-    fwrite(src_buf, 1, src_size, out);
+    uint8_t nonce[PSZ_NONCE_SIZE];
+    memset(nonce, 0x42, PSZ_NONCE_SIZE); // Deterministic/pseudo nonce for homebrew packaging
+    fwrite(nonce, 1, PSZ_NONCE_SIZE, out);
+
+    // Write payload data
+    if (src_size > 0) {
+        fwrite(src_buf, 1, (size_t)src_size, out);
+    }
 
     fclose(out);
     free(src_buf);
