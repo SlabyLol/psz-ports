@@ -1,15 +1,28 @@
 TARGET = psz_psp
-OBJS = main.c ../../src/psz_core.o
+OBJS = main.o psz_core.o
 
-CFLAGS = -O2 -G0 -Wall -I../../include
+INCDIR = ../../include
+CFLAGS = -O2 -G0 -Wall -I$(INCDIR)
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ASFLAGS = $(CFLAGS)
 
+EXTRA_TARGETS = EBOOT.PBP
 EXTRA_CLEAN = PARAM.SFO EBOOT.PBP
+PSP_EBOOT_TITLE = PSZ Studio
+PSP_EBOOT_ICON = ../../assets/psp/icon.png
+PSP_EBOOT_PIC1 = ../../assets/psp/pic1.png
 
 PSPSDK = $(shell psp-config --pspsdk-path)
 include $(PSPSDK)/lib/build.mak
 
-# Custom target to bundle icons and banners into EBOOT.PBP
-eboot: $(TARGET).elf
-	pack-pbp EBOOT.PBP PARAM.SFO ../../assets/psp/icon.png NULL NULL NULL ../../assets/psp/pic1.png NULL $(TARGET).elf NULL
+psz_core.o: ../../src/psz_core.c ../../include/psz.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+main.o: main.c ../../include/psz.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+.PHONY: eboot
+eboot: EBOOT.PBP
+
+clean-assets:
+	rm -f $(EXTRA_CLEAN) $(OBJS) $(TARGET).elf

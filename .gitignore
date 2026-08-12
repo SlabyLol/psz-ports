@@ -1,0 +1,12 @@
+
+# Local build output
+*.o
+*.elf
+*.3dsx
+*.smdh
+*.cia
+*.dol
+*.rpx
+*.wuhb
+*.PBP
+PARAM.SFO

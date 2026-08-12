@@ -1,20 +1,25 @@
+.SUFFIXES:
+
 ifeq ($(strip $(DEVKITPPC)),)
-$(error "Please set DEVKITPPC in your environment. export DEVKITPPC=<path>")
+$(error "Please set DEVKITPPC in your environment.")
 endif
 
 include $(DEVKITPPC)/wii_rules
 
-TARGET		:= psz_wii
-CFLAGS		:= -O2 -Wall -I../../include -I$(DEVKITPRO)/libogc/include
-LDFLAGS		:= -L$(DEVKITPRO)/libogc/lib -lwiiuse -lbte -logc -lm
+TARGET := psz_wii
+SOURCES := main.c ../../src/psz_core.c
+CFLAGS := -g -O2 -Wall $(MACHDEP) -I../../include -I$(LIBOGC_INC)
+LDFLAGS := -g $(MACHDEP) -L$(LIBOGC_LIB)
+LIBS := -lwiiuse -lbte -lfat -logc -lm
 
+.PHONY: all clean
 all: $(TARGET).dol
 
-$(TARGET).elf: main.c ../../src/psz_core.o
-	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+$(TARGET).elf: $(SOURCES) ../../include/psz.h
+	$(CC) $(CFLAGS) $(SOURCES) $(LDFLAGS) $(LIBS) -o $@
 
-%.dol: %.elf
+$(TARGET).dol: $(TARGET).elf
 	elf2dol $< $@
 
 clean:
-	rm -f $(TARGET).elf $(TARGET).dol ../../src/psz_core.o
+	rm -f $(TARGET).elf $(TARGET).dol $(TARGET).map

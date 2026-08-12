@@ -23,7 +23,7 @@ static int file_count = 0;
 static int selected_index = 0;
 static char current_path[MAX_PATH] = "ms0:/";
 
-int exit_callback(int arg1, int arg2, int common) {
+int exit_callback(int arg1, int arg2, void *common) {
     sceKernelExitGame();
     return 0;
 }

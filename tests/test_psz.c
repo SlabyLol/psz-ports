@@ -40,7 +40,7 @@ void test_archive_creation_and_extraction() {
     fseek(arch_file, 0, SEEK_SET);
 
     uint8_t *arch_buf = malloc(arch_size);
-    fread(arch_buf, 1, arch_size, arch_file);
+    assert(fread(arch_buf, 1, (size_t)arch_size, arch_file) == (size_t)arch_size);
     fclose(arch_file);
 
     // Extract archive

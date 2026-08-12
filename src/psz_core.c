@@ -72,7 +72,11 @@ int psz_make_archive(const char *source_path, const char *output_psz_path, psz_f
         return -1;
     }
 
-    fread(src_buf, 1, src_size, src);
+    if (fread(src_buf, 1, (size_t)src_size, src) != (size_t)src_size) {
+        fclose(src);
+        free(src_buf);
+        return -1;
+    }
     fclose(src);
 
     // Create output .psz file

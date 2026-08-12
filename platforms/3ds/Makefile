@@ -1,40 +1,61 @@
-TARGET		:= psz_3ds
-BUILD		:= build
-SOURCES		:= . ../../src
-DATA		:= data
-INCLUDES	:= ../../include -I$(DEVKITPRO)/libctru/include
+.SUFFIXES:
 
 ifeq ($(strip $(DEVKITARM)),)
-$(error "Please set DEVKITARM in your environment. export DEVKITARM=<path> to devkitARM")
+$(error "Please set DEVKITARM in your environment.")
 endif
 
+TOPDIR ?= $(CURDIR)
 include $(DEVKITARM)/3ds_rules
 
-ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard
-CFLAGS	:=	-Wall -O2 -mword-relocations \
-			-fomit-frame-pointer -ffunction-sections \
-			$(ARCH) -D_ROMFS -I$(INCLUDES)
+TARGET := psz_3ds
+BUILD := build
+SOURCES := . ../../src
+INCLUDES := ../../include
+ICON := ../../assets/3ds/icon.png
+APP_TITLE := PSZ Studio
+APP_DESCRIPTION := Encrypted Archive Manager
+APP_AUTHOR := SlabyLol
 
-CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
+ARCH := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
+CFLAGS := -g -Wall -O2 -mword-relocations -ffunction-sections $(ARCH)
+CFLAGS += $(INCLUDE) -D__3DS__
+CXXFLAGS := $(CFLAGS) -fno-rtti -fno-exceptions
+ASFLAGS := -g $(ARCH)
+LDFLAGS := -specs=3dsx.specs -g $(ARCH) -Wl,-Map,$(notdir $*.map)
+LIBS := -lcitro2d -lcitro3d -lctru -lm
+LIBDIRS := $(CTRULIB)
 
-ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	:=	-specs=3dsx.specs $(ARCH) -Wl,--gc-sections -L$(DEVKITPRO)/libctru/lib
+ifneq ($(BUILD),$(notdir $(CURDIR)))
+export OUTPUT := $(CURDIR)/$(TARGET)
+export TOPDIR := $(CURDIR)
+export VPATH := $(foreach dir,$(SOURCES),$(CURDIR)/$(dir))
+export DEPSDIR := $(CURDIR)/$(BUILD)
+CFILES := $(foreach dir,$(SOURCES),$(notdir $(wildcard $(dir)/*.c)))
+export OFILES := $(CFILES:.c=.o)
+export INCLUDE := $(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) $(foreach dir,$(LIBDIRS),-I$(dir)/include) -I$(CURDIR)/$(BUILD)
+export LIBPATHS := $(foreach dir,$(LIBDIRS),-L$(dir)/lib)
+export APP_ICON := $(TOPDIR)/$(ICON)
+export _3DSXFLAGS := --smdh=$(CURDIR)/$(TARGET).smdh
 
-LIBS	:=	-lcitro2d -lcitro3d -lctru -lm
+.PHONY: all clean cia
+all: $(BUILD)
 
-all: $(TARGET).3dsx $(TARGET).cia
+$(BUILD):
+	@[ -d $@ ] || mkdir -p $@
+	@$(MAKE) --no-print-directory -C $(BUILD) -f $(CURDIR)/Makefile
 
-$(TARGET).3dsx: $(TARGET).elf
-
-$(TARGET).cia: $(TARGET).elf
-	smdhtool --create "PSZ Studio" "Encrypted Archive Manager" "Manus AI" ../../assets/3ds/icon.png icon.smdh
-	bannertool makebanner -i ../../assets/3ds/banner.png -o banner.bnr
-	makerom -f cia -o $(TARGET).cia -target t -exheader exheader.bin -Code $(TARGET).elf -icon icon.smdh -banner banner.bnr -rsf 3ds.rsf || \
-	makerom -f cia -o $(TARGET).cia -exefslogo -icon icon.smdh -banner banner.bnr -code $(TARGET).elf
-
-%.elf:
-	$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
+# Optional installable format. Requires makerom and bannertool in PATH.
+cia: $(TARGET).3dsx
+	@command -v makerom >/dev/null || (echo "makerom is required for the CIA target"; exit 1)
+	@command -v bannertool >/dev/null || (echo "bannertool is required for the CIA target"; exit 1)
+	@echo "CIA packaging must be configured with a unique Title ID and RSF manifest."
+	@exit 1
 
 clean:
-	@echo clean ...
-	@rm -fr build $(TARGET).3dsx $(TARGET).cia $(TARGET).elf icon.smdh banner.bnr
+	@rm -fr $(BUILD) $(TARGET).3dsx $(TARGET).elf $(TARGET).smdh $(TARGET).cia
+else
+DEPENDS := $(OFILES:.o=.d)
+$(OUTPUT).3dsx: $(OUTPUT).elf $(OUTPUT).smdh
+$(OUTPUT).elf: $(OFILES)
+-include $(DEPENDS)
+endif

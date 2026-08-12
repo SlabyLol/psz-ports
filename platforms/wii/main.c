@@ -4,6 +4,7 @@
 #include <dirent.h>
 #include <gccore.h>
 #include <wiiuse/wpad.h>
+#include <fat.h>
 #include "psz.h"
 
 static void *xfb = NULL;
@@ -57,6 +58,10 @@ static void scan_directory(const char *path) {
 int main(int argc, char **argv) {
     VIDEO_Init();
     WPAD_Init();
+
+    if (!fatInitDefault()) {
+        return 1;
+    }
 
     rmode = VIDEO_GetPreferredMode(NULL);
     xfb = MEM_K0_TO_K1(SYS_AllocateFramebuffer(rmode));
