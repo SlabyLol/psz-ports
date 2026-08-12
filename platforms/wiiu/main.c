@@ -4,11 +4,12 @@
 #include <string.h>
 #include <dirent.h>
 #include <malloc.h>
+#include <coreinit/foreground.h>
 #include <coreinit/screen.h>
 #include <coreinit/thread.h>
 #include <coreinit/time.h>
+#include <proc_ui/procui.h>
 #include <vpad/input.h>
-#include <whb/proc.h>
 #include "psz.h"
 
 #define MAX_FILES 32
@@ -25,6 +26,10 @@ static int file_count = 0;
 static int selected_index = 0;
 static char current_path[MAX_PATH] = "fs:/vol/external01";
 static char status_line[128] = "Ready";
+
+static void save_callback(void) {
+    OSSavesDone_ReadyToRelease();
+}
 
 static void scan_directory(const char *path) {
     file_count = 0;
@@ -140,7 +145,7 @@ static void draw_screen(OSScreenID screen) {
 }
 
 int main(int argc, char **argv) {
-    WHBProcInit();
+    ProcUIInit(save_callback);
     OSScreenInit();
 
     uint32_t tv_size = OSScreenGetBufferSizeEx(SCREEN_TV);
@@ -157,7 +162,7 @@ int main(int argc, char **argv) {
     scan_directory(current_path);
     bool touch_was_down = false;
 
-    while (WHBProcIsRunning()) {
+    while (ProcUIProcessMessages(true) == PROCUI_STATUS_IN_FOREGROUND) {
         VPADStatus pad;
         VPADReadError error;
         int32_t samples = VPADRead(VPAD_CHAN_0, &pad, 1, &error);
@@ -189,6 +194,6 @@ int main(int argc, char **argv) {
     free(tv_buffer);
     free(drc_buffer);
     OSScreenShutdown();
-    WHBProcShutdown();
+    ProcUIShutdown();
     return 0;
 }
