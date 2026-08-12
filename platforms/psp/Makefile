@@ -2,7 +2,7 @@ TARGET = psz_psp
 OBJS = main.o psz_core.o
 
 INCDIR = ../../include
-CFLAGS = -O2 -G0 -Wall -I$(INCDIR)
+CFLAGS = -O2 -G0 -Wall
 CXXFLAGS = $(CFLAGS) -fno-exceptions -fno-rtti
 ASFLAGS = $(CFLAGS)
 
@@ -23,6 +23,3 @@ main.o: main.c ../../include/psz.h
 
 .PHONY: eboot
 eboot: EBOOT.PBP
-
-clean-assets:
-	rm -f $(EXTRA_CLEAN) $(OBJS) $(TARGET).elf

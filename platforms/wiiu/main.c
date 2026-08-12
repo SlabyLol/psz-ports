@@ -1,12 +1,13 @@
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
 #include <malloc.h>
 #include <coreinit/screen.h>
+#include <coreinit/thread.h>
 #include <coreinit/time.h>
 #include <vpad/input.h>
-#include <whb/log.h>
 #include <whb/proc.h>
 #include "psz.h"
 
@@ -140,11 +141,10 @@ static void draw_screen(OSScreenID screen) {
 
 int main(int argc, char **argv) {
     WHBProcInit();
-    WHBLogConsoleInit();
     OSScreenInit();
 
-    u32 tv_size = OSScreenGetBufferSizeEx(SCREEN_TV);
-    u32 drc_size = OSScreenGetBufferSizeEx(SCREEN_DRC);
+    uint32_t tv_size = OSScreenGetBufferSizeEx(SCREEN_TV);
+    uint32_t drc_size = OSScreenGetBufferSizeEx(SCREEN_DRC);
     void *tv_buffer = memalign(0x100, tv_size);
     void *drc_buffer = memalign(0x100, drc_size);
     if (!tv_buffer || !drc_buffer) return 1;
@@ -182,7 +182,6 @@ int main(int argc, char **argv) {
 
         draw_screen(SCREEN_TV);
         draw_screen(SCREEN_DRC);
-        WHBLogConsoleDraw();
         OSSleepTicks(OSMillisecondsToTicks(16));
     }
 
@@ -190,7 +189,6 @@ int main(int argc, char **argv) {
     free(tv_buffer);
     free(drc_buffer);
     OSScreenShutdown();
-    WHBLogConsoleFree();
     WHBProcShutdown();
     return 0;
 }

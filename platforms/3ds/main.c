@@ -78,7 +78,8 @@ int main(int argc, char **argv) {
     psz_init();
     scan_directory(current_path);
 
-    C2D_TextBuf staticTextBuf = C2D_TextBufNew(4096);
+    C2D_TextBuf staticTextBuf = C2D_TextBufNew(512);
+    C2D_TextBuf frameTextBuf = C2D_TextBufNew(4096);
     C2D_Text titleText, statusText;
     C2D_TextBufClear(staticTextBuf);
     C2D_TextParse(&titleText, staticTextBuf, "PSZ Studio - 3DS Touch Edition");
@@ -138,20 +139,21 @@ int main(int argc, char **argv) {
         if (kDown & KEY_UP && selected_index > 0) selected_index--;
         if (kDown & KEY_DOWN && selected_index < file_count - 1) selected_index++;
 
+        C2D_TextBufClear(frameTextBuf);
         C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
 
         // Top Screen
         C2D_SceneBegin(topScreen);
         C2D_TargetClear(topScreen, clrBg);
         C2D_DrawRectSolid(0, 0, 0, SCREEN_WIDTH, 35, clrHeader);
-        C2D_DrawText(&titleText, C2D_WithColor, 10, 8, 0.6f, clrText);
+        C2D_DrawText(&titleText, C2D_WithColor, 10, 8, 0.0f, 0.6f, 0.6f, clrText);
 
         C2D_DrawRectSolid(20, 50, 0, SCREEN_WIDTH - 40, 60, clrHeader);
         C2D_Text statusTextDynamic;
-        C2D_TextParse(&statusTextDynamic, staticTextBuf, action_status);
+        C2D_TextParse(&statusTextDynamic, frameTextBuf, action_status);
         C2D_TextOptimize(&statusTextDynamic);
-        C2D_DrawText(&statusTextDynamic, C2D_WithColor, 30, 65, 0.5f, clrHighlight);
-        C2D_DrawText(&statusText, C2D_WithColor, 20, 200, 0.45f, clrText);
+        C2D_DrawText(&statusTextDynamic, C2D_WithColor, 30, 65, 0.0f, 0.5f, 0.5f, clrHighlight);
+        C2D_DrawText(&statusText, C2D_WithColor, 20, 200, 0.0f, 0.45f, 0.45f, clrText);
 
         // Bottom Screen (File Browser)
         C2D_SceneBegin(bottomScreen);
@@ -159,9 +161,9 @@ int main(int argc, char **argv) {
 
         C2D_DrawRectSolid(0, 0, 0, SUB_WIDTH, 25, clrHeader);
         C2D_Text pathText;
-        C2D_TextParse(&pathText, staticTextBuf, current_path);
+        C2D_TextParse(&pathText, frameTextBuf, current_path);
         C2D_TextOptimize(&pathText);
-        C2D_DrawText(&pathText, C2D_WithColor, 5, 4, 0.45f, clrHighlight);
+        C2D_DrawText(&pathText, C2D_WithColor, 5, 4, 0.0f, 0.45f, 0.45f, clrHighlight);
 
         int start_idx = selected_index - 6;
         if (start_idx < 0) start_idx = 0;
@@ -177,16 +179,17 @@ int main(int argc, char **argv) {
             }
 
             C2D_Text itemText;
-            C2D_TextParse(&itemText, staticTextBuf, entry->name);
+            C2D_TextParse(&itemText, frameTextBuf, entry->name);
             C2D_TextOptimize(&itemText);
             
             u32 col = entry->is_dir ? clrFolder : clrFile;
-            C2D_DrawText(&itemText, C2D_WithColor, 10, y + 2, 0.5f, col);
+            C2D_DrawText(&itemText, C2D_WithColor, 10, y + 2, 0.0f, 0.5f, 0.5f, col);
         }
 
-        C3D_FrameEnd();
+        C3D_FrameEnd(0);
     }
 
+    C2D_TextBufDelete(frameTextBuf);
     C2D_TextBufDelete(staticTextBuf);
     psz_cleanup();
     C2D_Fini();
