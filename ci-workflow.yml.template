@@ -3,8 +3,8 @@ name: PSZ CI/CD & Auto-Release
 on:
   push:
     tags:
-      - 'v*' # Trigger release on version tags like v1.0.0
-  workflow_dispatch: # Allow manual trigger
+      - 'v*'
+  workflow_dispatch:
 
 jobs:
   run-unit-tests:
@@ -43,13 +43,19 @@ jobs:
         uses: actions/checkout@v4
       - name: Build 3DS
         run: |
+          dfile-configure || true
           cd platforms/3ds
           make
-      - name: Upload 3DS Artifact
+      - name: Upload 3DS 3DSX
         uses: actions/upload-artifact@v4
         with:
-          name: psz-3ds
+          name: psz-3ds-3dsx
           path: platforms/3ds/psz_3ds.3dsx
+      - name: Upload 3DS CIA
+        uses: actions/upload-artifact@v4
+        with:
+          name: psz-3ds-cia
+          path: platforms/3ds/psz_3ds.cia
 
   build-wii-wiiu:
     needs: run-unit-tests
@@ -66,16 +72,16 @@ jobs:
         run: |
           cd platforms/wiiu
           make
-      - name: Upload Wii Artifact
+      - name: Upload Wii DOL
         uses: actions/upload-artifact@v4
         with:
-          name: psz-wii
+          name: psz-wii-dol
           path: platforms/wii/psz_wii.dol
-      - name: Upload Wii U Artifact
+      - name: Upload Wii U WUHB
         uses: actions/upload-artifact@v4
         with:
-          name: psz-wiiu
-          path: platforms/wiiu/psz_wiiu.rpx
+          name: psz-wiiu-wuhb
+          path: platforms/wiiu/psz_wiiu.wuhb
 
   create-release:
     needs: [build-psp, build-3ds, build-wii-wiiu]
@@ -94,17 +100,18 @@ jobs:
           files: |
             release-assets/EBOOT.PBP
             release-assets/psz_3ds.3dsx
+            release-assets/psz_3ds.cia
             release-assets/psz_wii.dol
-            release-assets/psz_wiiu.rpx
+            release-assets/psz_wiiu.wuhb
           name: PSZ Homebrew Release ${{ github.ref_name }}
           body: |
             Automated multi-platform release for PSZ Archive Studio.
             
-            Supported Platforms:
-            - Sony PSP (EBOOT.PBP)
-            - Nintendo 3DS (.3dsx)
-            - Nintendo Wii (.dol)
-            - Nintendo Wii U (.rpx)
+            Supported Formats & Consoles:
+            - Sony PSP: `EBOOT.PBP` (Memory Stick)
+            - Nintendo 3DS: `psz_3ds.3dsx` (Homebrew Launcher) & `psz_3ds.cia` (Installable CIA)
+            - Nintendo Wii: `psz_wii.dol` (Homebrew Channel)
+            - Nintendo Wii U: `psz_wiiu.wuhb` (Wii U Menu / Aroma / Tiramisu)
             
             Verified by automated unit tests.
           draft: false
